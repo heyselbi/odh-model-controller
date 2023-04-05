@@ -117,8 +117,7 @@ func FindOrCreateRoute(
 	desiredRoute *routev1.Route,
 	ctx context.Context,
 	inferenceservice *inferenceservicev1.InferenceService,
-	reconciler *OpenshiftInferenceServiceReconciler
-) (bool, error) {
+	reconciler *OpenshiftInferenceServiceReconciler) (bool, error) {
 	justCreated := false
 	if apierrs.IsNotFound(err) {
 		// FIXME: Add logger back at some point
