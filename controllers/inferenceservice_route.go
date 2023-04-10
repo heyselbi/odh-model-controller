@@ -33,14 +33,17 @@ import (
 
 const (
 	modelmeshServiceName     = "modelmesh-serving"
+	//------------is enable auth available with gRPC port as well?----------//
 	modelmeshAuthServicePort = 8443
 	modelmeshServicePort     = 8008
+	//------------how do we know port number?-------------------//
+	// some places suggest 8080 
 	modelmeshGrpcPort        = 8033
 )
 
 type RouteOptions int8
 const (
-	DEFAULT        RouteOptions = iota
+	ENABLE_HTTP        RouteOptions = iota
 	ENABLE_AUTH
 	ENABLE_GRPC
 )
@@ -50,7 +53,8 @@ func NewInferenceServiceRoute(inferenceservice *inferenceservicev1.InferenceServ
 
 	finalRoute := &routev1.Route{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      inferenceservice.Name,
+			//// HAVE TO CHANGE THE NAME TO REFLECT THE GRPC PORT/////////////
+			Name:      inferenceservice.Name + "-" + serviceAccountName,
 			Namespace: inferenceservice.Namespace,
 			Labels: map[string]string{
 				"inferenceservice-name": inferenceservice.Name,
@@ -73,7 +77,7 @@ func NewInferenceServiceRoute(inferenceservice *inferenceservicev1.InferenceServ
 		},
 	}
 
-	if routeOptions.DEFAULT {
+	if routeOptions.ENABLE_HTTP {
 		finalRoute.Spec.TLS = &routev1.TLSConfig{
 			Termination:                   routev1.TLSTerminationEdge,
 			InsecureEdgeTerminationPolicy: routev1.InsecureEdgeTerminationPolicyRedirect,
@@ -91,7 +95,7 @@ func NewInferenceServiceRoute(inferenceservice *inferenceservicev1.InferenceServ
 			finalRoute.Spec.Port = &routev1.RoutePort{
 				TargetPort: intstr.FromInt(modelmeshGrpcPort),
 			}
-			// INFO: Does gRPC need to enable TLS? 
+			// INFO: Does gRPC need to enable TLS? -----------
 			finalRoute.Spec.TLS = &routev1.TLSConfig{
 				Termination:                   routev1.TLSTerminationReencrypt,
 				InsecureEdgeTerminationPolicy: routev1.InsecureEdgeTerminationPolicyRedirect,
@@ -182,11 +186,8 @@ func UpdateRouteIfModified(
 
 // Reconcile will manage the creation, update and deletion of the route returned
 // by the newRoute function
-func (r *OpenshiftInferenceServiceReconciler) reconcileRoute(
-	inferenceservice *inferenceservicev1.InferenceService,
-	ctx context.Context,
-	newRoute func(service *inferenceservicev1.InferenceService, routeOptions RouteOptions) *routev1.Route
-) error {
+func (r *OpenshiftInferenceServiceReconciler) reconcileRoute(inferenceservice *inferenceservicev1.InferenceService,
+	ctx context.Context, newRoute func(service *inferenceservicev1.InferenceService, routeOptions RouteOptions) *routev1.Route) error {
 	// Initialize logger format
 	log := r.Log.WithValues("inferenceservice", inferenceservice.Name, "namespace", inferenceservice.Namespace)
 	
@@ -218,7 +219,7 @@ func (r *OpenshiftInferenceServiceReconciler) reconcileRoute(
 	if enableAuth {
 		desiredRoute := newRoute(inferenceservice, RouteOptions.ENABLE_AUTH)
 	} else {
-		desiredRoute := newRoute(inferenceservice, RouteOptions.DEFAULT)
+		desiredRoute := newRoute(inferenceservice, RouteOptions.ENABLE_HTTP)
 	}
 
 	// Create the default route (possible with auth enable) if it does not already exist
