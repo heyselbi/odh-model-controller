@@ -90,7 +90,6 @@ func NewInferenceServiceRoute(inferenceservice *inferenceservicev1.InferenceServ
 		finalRoute.Spec.Port = &routev1.RoutePort{
 			TargetPort: intstr.FromInt(modelmeshGrpcPort),
 		}
-		// INFO: Does gRPC need to enable TLS? -----------
 		finalRoute.Spec.TLS = &routev1.TLSConfig{
 			Termination:                   routev1.TLSTerminationReencrypt,
 			InsecureEdgeTerminationPolicy: routev1.InsecureEdgeTerminationPolicyRedirect,
