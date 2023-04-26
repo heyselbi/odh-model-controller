@@ -84,15 +84,9 @@ func NewInferenceServiceRoute(inferenceservice *inferenceservicev1.InferenceServ
 		}
 	}
 
+	// if grpc is selected, create a grpc route
 	if enableGrpc {
-		//// NOT SURE ABOUT THIS LINE //////////////////
 		finalRoute.ObjectMeta.Name = inferenceservice.Name + "-grpc"
-
-		// finalRoute.ObjectMeta.Name = &routev1.Route{
-		// 	ObjectMeta: metav1.ObjectMeta{
-		// 		Name: inferenceservice.Name + "-grpc",
-		// 	},
-		// }
 		finalRoute.Spec.Port = &routev1.RoutePort{
 			TargetPort: intstr.FromInt(modelmeshGrpcPort),
 		}
@@ -111,7 +105,6 @@ func CompareInferenceServiceRoutes(r1 routev1.Route, r2 routev1.Route) bool {
 	r1.Spec.Host, r2.Spec.Host = "", ""
 
 	// Two routes will be equal if the labels and spec are identical
-	//????????????????///// names are compared right?//////////////////
 	return reflect.DeepEqual(r1.ObjectMeta.Labels, r2.ObjectMeta.Labels) &&
 		reflect.DeepEqual(r1.Spec, r2.Spec)
 }
@@ -134,6 +127,7 @@ func (r *OpenshiftInferenceServiceReconciler) reconcileRoute(inferenceservice *i
 		}
 	}
 
+	// optionsList allows for creation of both grpc and http/s routes if desired
 	var optionsList [2]string
 
 	createRoute, enableAuth, enableGrpc := false, false, false
@@ -154,14 +148,9 @@ func (r *OpenshiftInferenceServiceReconciler) reconcileRoute(inferenceservice *i
 		optionsList[1] = "grpc"
 	}
 
-	// optionsList = {"http", ""}
-	//if grpc enabled
-	//add grpc to list
-
-	// optionsList = {http or https, grpc}
-	// for loop that goes through the list
-
 	for _, v := range optionsList {
+
+		// Check which route to create
 		if v == "http" || v == "https" {
 			enableGrpc = false
 		} else if v == "grpc" {
