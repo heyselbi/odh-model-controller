@@ -134,7 +134,7 @@ func (r *OpenshiftInferenceServiceReconciler) reconcileRoute(inferenceservice *i
 		}
 	}
 
-	var optionsList []string
+	var optionsList [2]string
 
 	createRoute, enableAuth, enableGrpc := false, false, false
 	if desiredServingRuntime.Annotations["enable-route"] == "true" {
